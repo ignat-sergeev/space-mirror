@@ -1,13 +1,26 @@
 // библиотека для работы I²C
 #include <Wire.h> 
-// подключаем библиотеку LiquidCrystal_I2C
+// подключаем библиотеку LiquidCrystal_I2C - монитор
 #include <LiquidCrystal_I2C.h>
  // библиотека для работы с часами реального времени
 #include "TroykaRTC.h"
 
-
-// подключаем библиотеку для bh1750
+// подключаем библиотеку для bh1750 - датчик освещённости
 #include <BH1750.h>
+
+// библиотека для работы с протоколом 1-Wire
+#include <OneWire.h>
+// библиотека для работы с датчиком DS18B20 - датчик температуры
+#include <DallasTemperature.h>
+ 
+// сигнальный провод датчика
+#define ONE_WIRE_BUS 10
+
+// создаём объект для работы с библиотекой OneWire
+OneWire oneWire(ONE_WIRE_BUS);
+ 
+// создадим объект для работы с библиотекой DallasTemperature
+DallasTemperature sensor(&oneWire);
 
 // Объявляем объект lightMeter
 BH1750 lightMeter;
@@ -56,8 +69,13 @@ void setup() {
   // включаем подсветку
   lcd.backlight();
 
-// Инициализируем и запускаем BH1750
+  // Инициализируем и запускаем BH1750
   lightMeter.begin();
+
+  // начинаем работу с датчиком
+  sensor.begin();
+  // устанавливаем разрешение датчика от 9 до 12 бит
+  sensor.setResolution(12);
 
   Serial.println(F("BH1750 тест"));  
 }
@@ -85,9 +103,9 @@ void loop() {
   // печатаем вторую строку
   lcd.print(date);
   // устанавливаем курсор в колонку 0, строку 2 
-  lcd.setCursor(0, 2);
+  //lcd.setCursor(0, 2);
   // печатаем третью строку
-  lcd.print(weekDay);
+  //lcd.print(weekDay);
   // устанавливаем курсор в колонку 0, строку 3
   //lcd.setCursor(0, 3);
   // печатаем четвёртую строку
@@ -130,6 +148,18 @@ void loop() {
   //печатаем четвёртую строку
   lcd.print(dist);
 
+  // переменная для хранения температуры
+  float temperature;
+  // отправляем запрос на измерение температуры
+  sensor.requestTemperatures();
+  // считываем данные из регистра датчика
+  temperature = sensor.getTempCByIndex(0);
+  // устанавливаем курсор в колонку 0, строку 2 
+  lcd.setCursor(0, 2);
+  // выводим температуру
+  String temp("Temp C: ");
+  temp += temperature;
+  lcd.print(temperature);
   // ждём одну секунду
   delay(1000);
 }
